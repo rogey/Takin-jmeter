@@ -43,9 +43,13 @@ public class DynamicContext {
     public static Double TPS_FACTOR;
 
     private static AtomicBoolean inited = new AtomicBoolean(false);
+
     static {
+        logger.info("DynamicContext 静态构造方法");
         if (inited.compareAndSet(false, true)) {
+            logger.info("DynamicContext 初始化定时器");
             int flushTime = JMeterUtils.getPropDefault("tps_target_level_flush_time", 5000);
+            logger.info("DynamicContext 定时器周期:{}", flushTime);
             ExecutorServiceFactory.GLOBAL_SCHEDULE_EXECUTOR_SERVICE.scheduleWithFixedDelay(() -> {
                 flushTpsTargetLevel();
                 flushTpsFactor();
@@ -55,7 +59,9 @@ public class DynamicContext {
 
     private static void flushTpsTargetLevel() {
         try {
+            logger.info("DynamicContext 定时器-flushTpsTargetLevel.");
             Double tpsTargetLevel = NumberUtil.valueOf(JedisUtil.hget(JedisUtil.REDIS_TPS_LIMIT_FIELD));
+            logger.info("DynamicContext 定时器-flushTpsTargetLevel.value:{}", tpsTargetLevel);
             if (null == tpsTargetLevel || tpsTargetLevel <= 0) {
                 return;
             }
@@ -70,7 +76,9 @@ public class DynamicContext {
 
     private static void flushTpsFactor() {
         try {
+            logger.info("DynamicContext 定时器-flushTpsFactor.");
             Double tpsFactor = NumberUtil.valueOf(JedisUtil.hget(JedisUtil.REDIS_TPS_FACTOR));
+            logger.info("DynamicContext 定时器-flushTpsFactor.value:{}", tpsFactor);
             if (null == tpsFactor) {
                 return;
             }
