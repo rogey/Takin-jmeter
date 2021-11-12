@@ -60,6 +60,10 @@ public class DynamicContext {
     private static void flushTpsTargetLevel() {
         try {
             logger.info("DynamicContext 定时器-flushTpsTargetLevel.");
+            String checkString = String.valueOf(System.currentTimeMillis());
+            JedisUtil.getRedisUtil().hset(JedisUtil.getRedisMasterKey(), "CURRENT_TIME_MILLIS", checkString);
+            String checkStringFromRedis = JedisUtil.hget("CURRENT_TIME_MILLIS");
+            logger.info("DynamicContext 定时器-flushTpsTargetLevel.校验:{}-{}", checkString, checkStringFromRedis);
             Double tpsTargetLevel = NumberUtil.valueOf(JedisUtil.hget(JedisUtil.REDIS_TPS_LIMIT_FIELD));
             logger.info("DynamicContext 定时器-flushTpsTargetLevel.value:{}", tpsTargetLevel);
             if (null == tpsTargetLevel || tpsTargetLevel <= 0) {
