@@ -46,7 +46,10 @@ import org.apache.jmeter.save.CSVSaveService;
 import org.apache.jmeter.services.PositionFileInputStream;
 import org.apache.jmeter.services.PositionFileServer;
 import org.apache.jmeter.shulie.constants.PressureConstants;
+import org.apache.jmeter.shulie.util.DataUtil;
 import org.apache.jmeter.shulie.util.JedisUtil;
+import org.apache.jmeter.shulie.util.NumberUtil;
+import org.apache.jmeter.shulie.util.StringUtil;
 import org.apache.jmeter.testbeans.TestBean;
 import org.apache.jmeter.testbeans.gui.GenericTestBeanCustomizer;
 import org.apache.jmeter.testelement.property.JMeterProperty;
@@ -219,9 +222,6 @@ public class CSVDataSet extends ConfigTestElement
             fileName = filename.substring(fileName.lastIndexOf("/") + 1);
             PositionFileInputStream inputStream = PositionFileServer.positionMap.get(fileName);
             if (Objects.nonNull(inputStream)) {
-//                if (null == ThroughputConstants.jedisClient) {
-//                    initRedis();
-//                }
                 cachePosition(inputStream, fileName);
             }
         }
@@ -301,10 +301,14 @@ public class CSVDataSet extends ConfigTestElement
     }
 
     public void cachePosition(PositionFileInputStream inputStream, String fileName) {
-        String key = String.format("CSV_READ_POSITION_%s", PressureConstants.pressureEngineParamsInstance.getSceneId());
+        String sid = System.getProperty("SceneId");
+        log.info("缓存场景{}的文件{}读取位置",sid,fileName);
+        if(Objects.isNull(sid) || "".equals(sid)){
+            sid = "0";
+        }
+        String key = String.format("CSV_READ_POSITION_%s", sid);
         String podNum = StringUtils.isBlank(System.getProperty("pod.number")) ? "1" : System.getProperty("pod.number");
         String field = String.format("%s_pod_num_%s", fileName,podNum);
-        System.setProperty("SCENE_ID",PressureConstants.pressureEngineParamsInstance.getSceneId()+"");
         Pair<Long, Long> pair = getPosition(null, fileName);
         final long startPosition = pair.getLeft();
         final long endPosition = pair.getRight();
@@ -321,7 +325,7 @@ public class CSVDataSet extends ConfigTestElement
                 value.put("startPosition", startPosition);
                 value.put("readPosition", position);
                 value.put("endPosition", endPosition);
-                log.info("缓存文件读取位点信息{}",value.toString());
+                log.info("缓存文件读取位点信息:key:{},field:{},value:{}",key,field,value.toString());
                 redisUtil.hset(key,field, JSON.toJSONString(value));
             } catch (IOException e) {
                 log.error("获取可读文件大小失败{}", e.getMessage());
